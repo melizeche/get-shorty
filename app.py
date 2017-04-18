@@ -1,11 +1,12 @@
 import json
 import sqlite3 as sq
-from flask import Flask, request, Response, jsonify
+from flask import Flask, request, Response, jsonify, redirect
 from urllib.parse import urlparse
 from user_agents import parse as parse_ua
 from baseconv import base36
 
 app = Flask(__name__)
+HOST = 'http://localhost:5000'
 
 
 def create_table():
@@ -35,12 +36,10 @@ def get_max_id():
         try:
             cursor.execute(query)
             result = cursor.fetchone()
-            print(result)
-            print(type(result))
-            if result==None:
-                max_id=0
+            max_id = 0 if result[0] == None else result[0]
             print(max_id)
             print(type(max_id))
+            return max_id + 1
         except sq.OperationalError:
             print("Error!")
 
@@ -77,24 +76,98 @@ def test():
             print(tablet_url)
         print(url, mobile_url, tablet_url)
         if not errors:
-            return Response("{0} {1} {2}".format(url, mobile_url, tablet_url), status=201)
+            shorten = long_to_short(url, mobile_url, tablet_url)
+            if not shorten:
+                return Response(json.dumps(dict(errors='Server Error')), status=500, mimetype="application/json")
+            response_data = dict(shorten="{0}/{1}".format(HOST, shorten),
+                                 url="{}".format(url), mobile=mobile_url, tablet=tablet_url)
+            return Response(json.dumps(response_data), status=201, mimetype="application/json")
     else:
         errors.append({'detail': 'Missing url parameter'})
     return Response(json.dumps(dict(errors=errors)), status=422, mimetype="application/json")
 
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
 
+@app.route('/api/1.0/list', methods=['GET'])
 def get_urls():
-    pass
+    query = 'SELECT * from urls;'
+    print(query)
+    with sq.connect('getshorty.sqlite3') as conn:
+        conn.row_factory = dict_factory
+        cursor = conn.cursor()
+        try:
+            cursor.execute(query)
+            rows = cursor.fetchall()
+            print("AAAAAA")
+            for row in rows:
+                short = row['short']
+                row['short'] = '{host}/{short}'.format(host=HOST,short=row['short'])
+            return Response(json.dumps(rows), status=200, mimetype="application/json")
+        except:
+            return Response(json.dumps(dict(errors='Server Error')), status=500, mimetype="application/json")
 
 
-def long_to_short(url):
-
-    pass
+def long_to_short(url, url_mobile=None, url_tablet=None):
+    url_id = get_max_id()
+    print(url_id)
+    based_id = base36.encode(url_id)
+    print(based_id)
+    query = 'INSERT into urls(short,default_url,mobile_url,tablet_url) VALUES ("{short}","{url}","{mobile}","{tablet}");'.\
+        format(short=based_id, url=url, mobile=url_mobile, tablet=url_tablet)
+    print(query)
+    with sq.connect('getshorty.sqlite3') as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute(query)
+            return based_id
+        except sq.OperationalError:
+            print("ERROR")
+            return False
 
 
 def short_to_long(urlcode):
-    pass
+    query = 'SELECT * from urls where short="{short}";'.format(short=urlcode)
+    print(query)
+    with sq.connect('getshorty.sqlite3') as conn:
+        conn.row_factory = sq.Row
+        cursor = conn.cursor()
+        # try:
+        cursor.execute(query)
+        row = cursor.fetchone()
+        print("AAAAAA")
+        #print(row)
+        return row
+        # except:
+        #     print("ERROR")
+
+
+@app.route('/<string:urlcode>', methods=['GET'])
+def lookup(urlcode):
+    print(urlcode)
+    result = short_to_long(urlcode)
+    print(type(result))
+    if result:
+        url = result['default_url']
+        ua = parse_ua(request.headers.get('User-Agent'))
+        print(ua, ua.is_mobile, ua.is_tablet)
+        print(result.keys())
+        print(result['mobile_url'])
+        print('true' if 'mobile_url' in result else 'false')
+        if result['mobile_url'] and ua.is_mobile:
+            url = result['mobile_url']
+        elif result['tablet_url'] and ua.is_tablet:
+            url = result['tablet_url']
+        print(url)
+        return redirect(url)
+        return Response(str(result['mobile_url ']))
+    return Response("URL NOT FOUND", status=404)
+
 
 if __name__ == '__main__':
     create_table()
+    # print(get_max_id())
     app.run(debug=True)
