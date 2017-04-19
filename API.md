@@ -11,34 +11,48 @@
   `POST`
 
 * **Data Params**
+
   JSON payload
 
     **Required:**
+    
    `url=[string]`
 
     **Optional:**
+    
    `url-mobile=[string]`
+   
    `url-tablet=[string]`
+   
 * **Success Response:**
   
   * **Code:** 201
+  
     **Content:** `{"shorten": "http://localhost:5000/6"}`
  
 * **Error Response:**
 
   * **Code:** 422 UNPROCESSABLE ENTITY
+    
     **Content:** `{"errors": [{"error": "missing parameter","detail": "url parameter is mandatory"}}`
+  
   * **Code:** 422 UNPROCESSABLE ENTITY
+    
     **Content:** `{"errors": [{'error': 'invalid url','detail': 'Invalid url, make sure to add the protocol e.g. http://'}]}`
+  
   * **Code:** 422 UNPROCESSABLE ENTITY
+    
     **Content:** `{"errors": [{'error': 'invalid url-mobile','detail': 'Invalid url url-mobile, make sure to add the protocol e.g. http://'}]}`
   * **Code:** 422 UNPROCESSABLE ENTITY
+    
     **Content:** `{"errors": [{'error': 'invalid url-tablet','detail': 'Invalid url url-tablet, make sure to add the protocol e.g. http://'}]}`
 
   OR
 
   * **Code:** 500  Internal Server Error
+  
     **Content:** `{"errors": [{'error': 'server error','detail': 'Server Error'}]}`
+    
 * **Sample Call:**
 
     `curl -d '{"url":"https://www.facebook.com","url-mobile":"https://m.facebook.com/","url-tablet":"https://touch.facebook.com/"}' localhost:5000/api/1.0/create`
@@ -61,6 +75,7 @@
 * **Success Response:**
   
   * **Code:** 200
+  
     **Content:** `[
 {
 id: 1,
@@ -88,7 +103,9 @@ created: "2017-04-19 09:31:12"
 * **Error Response:**
 
   * **Code:** 500  Internal Server Error
+  
     **Content:** `{"errors": [{'error': 'server error','detail': 'Server Error'}]}`
+    
 * **Sample Call:**
 
     `curl localhost:5000/api/1.0/list`
