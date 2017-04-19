@@ -229,7 +229,7 @@ def lookup(urlcode):
         hit(urlcode, target)
         return redirect(url)
         return Response(str(result['mobile_url ']))
-    return Response("URL NOT FOUND", status=404)
+    return Response('{"error":"URL NOT FOUND"}', status=404, mimetype="application/json")
 
 
 if __name__ == '__main__':
