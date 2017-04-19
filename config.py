@@ -8,5 +8,6 @@ ERROR_MOBILE = {'error': 'invalid url-mobile',
 ERROR_TABLET = {'error': 'invalid url-tablet',
                 'detail': 'Invalid url url-tablet, make sure to add the protocol e.g. http://'}
 ERROR_MISSING = {'error': 'missing parameter',
-                'detail': 'url parameter is mandatory'}
-    
+                 'detail': 'url parameter is mandatory'}
+ERROR_SERVER = {'error': 'server error',
+                'detail': 'Server Error'}

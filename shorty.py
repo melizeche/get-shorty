@@ -9,7 +9,8 @@ from baseconv import base36
 
 app = Flask(__name__)
 
-def create_table():
+
+def init_db():
     """ Initialize the DB """
     with sq.connect(cfg.DATABASE) as conn:
         cursor = conn.cursor()
@@ -19,6 +20,13 @@ def create_table():
             conn.commit()
         except sq.OperationalError:
             print("Table already created")
+
+
+@app.cli.command('initdb')
+def initdb_command():
+    """Creates the database tables."""
+    print('Initializing database.')
+    init_db()
 
 
 def get_max_id():
@@ -106,7 +114,8 @@ def create():
         url = params['url']
         if not valid_url(url):
             errors.append(cfg.ERROR_URL)
-        if 'url-mobile' in params and params['url-mobile']: #Checks if the parameter exists and if isn't empty
+        # Checks if the parameter exists and if isn't empty
+        if 'url-mobile' in params and params['url-mobile']:
             mobile_url = params['url-mobile']
             if not valid_url(params['url-mobile']):
                 errors.append(cfg.ERROR_MOBILE)
@@ -117,9 +126,9 @@ def create():
         if not errors:
             shorten = long_to_short(url, mobile_url, tablet_url)
             if not shorten:
-                return Response(json.dumps(dict(errors='Server Error')), status=500, mimetype="application/json")
-            response_data = OrderedDict(shorten="{0}/{1}".format(cfg.HOST, shorten),
-                                        url="{}".format(url), mobile=mobile_url, tablet=tablet_url)
+                return Response(json.dumps(dict(errors=cfg.ERROR_SERVER)), status=500, mimetype="application/json")
+            response_data = OrderedDict(shorten="{0}/{1}".format(cfg.HOST, shorten))#,
+                                        #url="{}".format(url), mobile=mobile_url, tablet=tablet_url)
             return Response(json.dumps(response_data), status=201, mimetype="application/json")
     else:
         errors.append(cfg.ERROR_MISSING)
@@ -148,7 +157,7 @@ def get_urls():
                     host=cfg.HOST, short=row['short'])
             return Response(json.dumps(rows), status=200, mimetype="application/json")
         except:
-            return Response(json.dumps(dict(errors='Server Error')), status=500, mimetype="application/json")
+            return Response(json.dumps(dict(errors=cfg.ERROR_SERVER)), status=500, mimetype="application/json")
 
 
 def long_to_short(url, url_mobile=None, url_tablet=None):
@@ -224,5 +233,5 @@ def lookup(urlcode):
 
 
 if __name__ == '__main__':
-    create_table()
+    init_db()
     app.run(debug=True)

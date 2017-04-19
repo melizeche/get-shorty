@@ -21,9 +21,11 @@ pip install -r requirements.txt
 ## Usage
 ```
 export FLASK_APP='shorty.py'
-flask run
+flask initdb
+flask run 0.0.0.0:5000
 ```
-
+## API Docs
+ see the [API.md](API.md) file for details
 ## Running the tests
 
 TODO: Explain how to run the tests
