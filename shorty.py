@@ -48,8 +48,6 @@ def get_max_id():
         try:
             cursor.execute(query)
             result = cursor.fetchone()
-            print('{}'.format(result))
-            print(type(result))
             max_id = 0 if result[0] == None else result[0]
             return max_id + 1
         except sq.OperationalError:
@@ -77,7 +75,6 @@ def hit(urlcode, target):
                   mobile='mobile_hits', tablet='tablet_hits')
     query = 'UPDATE urls SET {target_hits} = {target_hits} + 1 WHERE short = {urlcode};'.\
             format(target_hits=column[target], urlcode=urlcode)
-    print(query)
     with sq.connect('getshorty.sqlite3') as conn:
         cursor = conn.cursor()
         try:
@@ -116,13 +113,12 @@ def create():
     url, mobile_url, tablet_url = None, None, None
     errors = []
     params = request.get_json(force=True)
-    print(params)
     if 'url' in params and params['url']:
         url = params['url']
         if not valid_url(url):
             errors.append(
                 {'detail': 'Invalid url, make sure to add the protocol e.g. http://'})
-        if 'url-mobile' in params and params['url-mobile']:
+        if 'url-mobile' in params and params['url-mobile']: #Checks if the parameter exists and if isn't empty
             mobile_url = params['url-mobile']
             if not valid_url(params['url-mobile']):
                 errors.append({'detail': 'Invalid url url-mobile'})
@@ -222,7 +218,6 @@ def lookup(urlcode):
     """
     urlcode = urlcode.lower()
     result = short_to_long(urlcode)
-    print(type(result))
     if result:
         url = result['default_url']
         target = 'default'

@@ -38,7 +38,7 @@ TODO: Explain how to run the tests
 
 ## TODO
 
-* Proper docuentation
+* Proper documentation
 * Use flask blueprints for api versioning
 
 ## Credits
