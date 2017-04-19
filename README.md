@@ -1,6 +1,6 @@
-# Flask Get Shorty
+# flask-get-shorty
 
-A simple URL shortener(Not working yet)
+A simple URL shortener capable of redirect to diferent targets according to the user device(desktop, mobile, tablet) written in Flask
 
 ## Requirements
 
@@ -9,11 +9,20 @@ A simple URL shortener(Not working yet)
 
 ## Installation
 
-TODO: Describe the installation process
+Virtualenv is optional but strongly suggested
+```
+git clone git@github.com:melizeche/get-shorty.git
+cd get-shorty
+virtualenv env -p python3.5
+source env/bin/activate
+pip install -r requirements.txt
+```
 
 ## Usage
-
-TODO: Write usage instructions
+```
+export FLASK_APP='shorty.py'
+flask run
+```
 
 ## Running the tests
 

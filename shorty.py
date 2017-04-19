@@ -1,6 +1,7 @@
 import json
 import sqlite3 as sq
-from flask import Flask, request, Response, jsonify, redirect
+from collections import OrderedDict
+from flask import Flask, request, Response, redirect
 from urllib.parse import urlparse
 from user_agents import parse as parse_ua
 from baseconv import base36
@@ -53,6 +54,14 @@ def get_max_id():
             return max_id + 1
         except sq.OperationalError:
             print("Error!")
+
+
+def dict_factory(cursor, row):
+    """Dictionary factory, uses OrderedDict to preserve the order of the parameters"""
+    d = OrderedDict()
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
 
 
 def hit(urlcode, target):
@@ -125,19 +134,12 @@ def create():
             shorten = long_to_short(url, mobile_url, tablet_url)
             if not shorten:
                 return Response(json.dumps(dict(errors='Server Error')), status=500, mimetype="application/json")
-            response_data = dict(shorten="{0}/{1}".format(HOST, shorten),
-                                 url="{}".format(url), mobile=mobile_url, tablet=tablet_url)
+            response_data = OrderedDict(shorten="{0}/{1}".format(HOST, shorten),
+                                        url="{}".format(url), mobile=mobile_url, tablet=tablet_url)
             return Response(json.dumps(response_data), status=201, mimetype="application/json")
     else:
         errors.append({'detail': 'Missing url parameter'})
     return Response(json.dumps(dict(errors=errors)), status=422, mimetype="application/json")
-
-
-def dict_factory(cursor, row):
-    d = {}
-    for idx, col in enumerate(cursor.description):
-        d[col[0]] = row[idx]
-    return d
 
 
 @app.route('/api/1.0/list', methods=['GET'])
@@ -149,14 +151,12 @@ def get_urls():
     :raises: raises an exception if there's a problem with the DB
     """
     query = 'SELECT * from urls;'
-    print(query)
     with sq.connect('getshorty.sqlite3') as conn:
         conn.row_factory = dict_factory
         cursor = conn.cursor()
         try:
             cursor.execute(query)
             rows = cursor.fetchall()
-            print("AAAAAA")
             for row in rows:
                 short = row['short']
                 row['short'] = '{host}/{short}'.format(
