@@ -1,4 +1,5 @@
 import json
+import config as cfg
 import sqlite3 as sq
 from collections import OrderedDict
 from flask import Flask, request, Response, redirect
@@ -7,27 +8,15 @@ from user_agents import parse as parse_ua
 from baseconv import base36
 
 app = Flask(__name__)
-HOST = 'http://localhost:5000'
-
 
 def create_table():
     """ Initialize the DB """
-    query = """
-        create table urls (
-            id integer primary key autoincrement,
-            short text unique not null,
-            default_url text not null,
-            default_hits integer default 0,
-            mobile_url text,
-            mobile_hits integer default 0,
-            tablet_url text,
-            tablet_hits integer default 0,
-            created datetime default current_timestamp
-        );"""
-    with sq.connect('getshorty.sqlite3') as conn:
+    with sq.connect(cfg.DATABASE) as conn:
         cursor = conn.cursor()
         try:
-            cursor.execute(query)
+            with app.open_resource('schema.sql', mode='r') as f:
+                cursor.executescript(f.read())
+            conn.commit()
         except sq.OperationalError:
             print("Table already created")
 
@@ -42,7 +31,7 @@ def get_max_id():
     query = """
         SELECT MAX(id) from urls;
         """
-    with sq.connect('getshorty.sqlite3') as conn:
+    with sq.connect(cfg.DATABASE) as conn:
         conn.row_factory = sq.Row
         cursor = conn.cursor()
         try:
@@ -75,7 +64,7 @@ def hit(urlcode, target):
                   mobile='mobile_hits', tablet='tablet_hits')
     query = 'UPDATE urls SET {target_hits} = {target_hits} + 1 WHERE short = {urlcode};'.\
             format(target_hits=column[target], urlcode=urlcode)
-    with sq.connect('getshorty.sqlite3') as conn:
+    with sq.connect(cfg.DATABASE) as conn:
         cursor = conn.cursor()
         try:
             cursor.execute(query)
@@ -116,25 +105,24 @@ def create():
     if 'url' in params and params['url']:
         url = params['url']
         if not valid_url(url):
-            errors.append(
-                {'detail': 'Invalid url, make sure to add the protocol e.g. http://'})
+            errors.append(cfg.ERROR_URL)
         if 'url-mobile' in params and params['url-mobile']: #Checks if the parameter exists and if isn't empty
             mobile_url = params['url-mobile']
             if not valid_url(params['url-mobile']):
-                errors.append({'detail': 'Invalid url url-mobile'})
+                errors.append(cfg.ERROR_MOBILE)
         if 'url-tablet' in params and params['url-tablet']:
             tablet_url = params['url-tablet']
             if not valid_url(params['url-tablet']):
-                errors.append({'detail': 'Invalid url url-tablet'})
+                errors.append(cfg.ERROR_TABLET)
         if not errors:
             shorten = long_to_short(url, mobile_url, tablet_url)
             if not shorten:
                 return Response(json.dumps(dict(errors='Server Error')), status=500, mimetype="application/json")
-            response_data = OrderedDict(shorten="{0}/{1}".format(HOST, shorten),
+            response_data = OrderedDict(shorten="{0}/{1}".format(cfg.HOST, shorten),
                                         url="{}".format(url), mobile=mobile_url, tablet=tablet_url)
             return Response(json.dumps(response_data), status=201, mimetype="application/json")
     else:
-        errors.append({'detail': 'Missing url parameter'})
+        errors.append(cfg.ERROR_MISSING)
     return Response(json.dumps(dict(errors=errors)), status=422, mimetype="application/json")
 
 
@@ -146,8 +134,9 @@ def get_urls():
     :returns: JSON, all the data in the urls table
     :raises: raises an exception if there's a problem with the DB
     """
+    print(app.config)
     query = 'SELECT * from urls;'
-    with sq.connect('getshorty.sqlite3') as conn:
+    with sq.connect(cfg.DATABASE) as conn:
         conn.row_factory = dict_factory
         cursor = conn.cursor()
         try:
@@ -156,7 +145,7 @@ def get_urls():
             for row in rows:
                 short = row['short']
                 row['short'] = '{host}/{short}'.format(
-                    host=HOST, short=row['short'])
+                    host=cfg.HOST, short=row['short'])
             return Response(json.dumps(rows), status=200, mimetype="application/json")
         except:
             return Response(json.dumps(dict(errors='Server Error')), status=500, mimetype="application/json")
@@ -177,7 +166,7 @@ def long_to_short(url, url_mobile=None, url_tablet=None):
     based_id = base36.encode(url_id)
     query = 'INSERT into urls(short,default_url,mobile_url,tablet_url) VALUES ("{short}","{url}","{mobile}","{tablet}");'.\
         format(short=based_id, url=url, mobile=url_mobile, tablet=url_tablet)
-    with sq.connect('getshorty.sqlite3') as conn:
+    with sq.connect(cfg.DATABASE) as conn:
         cursor = conn.cursor()
         try:
             cursor.execute(query)
@@ -196,7 +185,7 @@ def short_to_long(urlcode):
     :raises: raises an exception if there's a problem with the DB
     """
     query = 'SELECT * from urls where short="{short}";'.format(short=urlcode)
-    with sq.connect('getshorty.sqlite3') as conn:
+    with sq.connect(cfg.DATABASE) as conn:
         conn.row_factory = sq.Row
         cursor = conn.cursor()
         try:
