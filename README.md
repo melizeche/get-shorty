@@ -20,7 +20,7 @@ pip install -r requirements.txt
 
 ## Usage
 ```
-export FLASK_APP='run.py'
+export FLASK_APP='getshorty.py'
 flask initdb
 flask run 0.0.0.0:5000
 ```
@@ -28,7 +28,9 @@ flask run 0.0.0.0:5000
  see the [API.md](API.md) file for details
 ## Running the tests
 
-TODO: Explain how to run the tests
+```
+python tests_shorty.py
+```
 
 ## Contributing
 
