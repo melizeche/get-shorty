@@ -58,13 +58,16 @@ class GetShortyTestCase(unittest.TestCase):
             '/api/1.0/create', data='{"url":"%s","url-mobile":"%s","url-tablet":"%s"}' % (URL, URL_MOBILE, URL_TABLET))
         assert resp.status_code == 201
         short_url = json.loads(resp.data.decode('utf-8'))['shorten']
-        resp_default = self.app.get(short_url, environ_base={'HTTP_USER_AGENT':UA})
+        resp_default = self.app.get(short_url, environ_base={
+                                    'HTTP_USER_AGENT': UA})
         assert resp_default.status_code == 302
         assert resp_default.location == URL
-        resp_mobile = self.app.get(short_url, environ_base={'HTTP_USER_AGENT':UA_MOBILE})
+        resp_mobile = self.app.get(short_url, environ_base={
+                                   'HTTP_USER_AGENT': UA_MOBILE})
         assert resp_mobile.status_code == 302
         assert resp_mobile.location == URL_MOBILE
-        resp_tablet = self.app.get(short_url, environ_base={'HTTP_USER_AGENT':UA_TABLET})
+        resp_tablet = self.app.get(short_url, environ_base={
+                                   'HTTP_USER_AGENT': UA_TABLET})
         assert resp_tablet.status_code == 302
         assert resp_tablet.location == URL_TABLET
 

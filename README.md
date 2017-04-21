@@ -22,7 +22,7 @@ pip install -r requirements.txt
 ```
 export FLASK_APP='getshorty.py'
 flask initdb
-flask run 0.0.0.0:5000
+flask run -h 0.0.0.0 -p 5000
 ```
 ## API Docs
  see the [API.md](API.md) file for details
@@ -42,8 +42,8 @@ python tests_shorty.py
 
 ## TODO
 
-* Tests
-* Proper documentation
+* More Tests
+* ~~Proper~~ Extend documentation
 * Use flask blueprints for api versioning
 
 
