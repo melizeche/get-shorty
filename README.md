@@ -20,7 +20,7 @@ pip install -r requirements.txt
 
 ## Usage
 ```
-export FLASK_APP='shorty.py'
+export FLASK_APP='run.py'
 flask initdb
 flask run 0.0.0.0:5000
 ```
