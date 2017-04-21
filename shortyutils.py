@@ -1,3 +1,4 @@
+from uuid import uuid4
 from baseconv import base36
 import sqlite3 as sq
 
@@ -6,28 +7,6 @@ class GetShorty:
 
     def __init__(self, database):
         self.DB = database
-
-    def get_max_id(self):
-        """
-        Get the max id in the DB to be able to encode the next one.
-
-        :returns: the value+1 of the last autoincremented id
-        :raises OperationalError: raises an exception if there's a problem with the DB
-        """
-
-        query = """
-            SELECT MAX(id) from urls;
-            """
-        with sq.connect(self.DB) as conn:
-            conn.row_factory = sq.Row
-            cursor = conn.cursor()
-            try:
-                cursor.execute(query)
-                result = cursor.fetchone()
-                max_id = 0 if result[0] == None else result[0]
-                return max_id + 1
-            except sq.OperationalError:
-                print("Error!")
 
     def hit(self, urlcode, target):
         """
@@ -62,22 +41,26 @@ class GetShorty:
         :returns: String, base_id=the short code 
         :raises OperationalError: raises an exception if there's a problem with the DB
         """
-        url_id = self.get_max_id()
-        try:
-            based_id = base36.encode(url_id)
-        except ValueError:
-            return False
 
+        temp_short = uuid4() #temporary short code so we can get lastworid after insert
         query = 'INSERT into urls(short,default_url,mobile_url,tablet_url) VALUES ("{short}","{url}","{mobile}","{tablet}");'.\
-            format(short=based_id, url=url,
+            format(short=temp_short, url=url,
                    mobile=url_mobile, tablet=url_tablet)
         with sq.connect(self.DB) as conn:
             cursor = conn.cursor()
             try:
                 cursor.execute(query)
+                url_id = cursor.lastrowid + 1
+                based_id = base36.encode(url_id)
+                #Update to the definitive short url
+                update_query = 'UPDATE urls SET short = "{new_short}"  WHERE short = "{temp_uuid}";'.\
+                    format(new_short=based_id, temp_uuid=temp_short)
+                cursor.execute(update_query)
                 return based_id
             except sq.OperationalError:
                 print("ERROR")
+                return False
+            except ValueError:
                 return False
 
     def short_to_long(self, urlcode):
