@@ -2,14 +2,13 @@ import os
 import json
 import config as cfg
 import sqlite3 as sq
-from collections import OrderedDict
-from flask import Flask, request, Response, redirect
-from urllib.parse import urlparse
-from user_agents import parse as parse_ua
-from baseconv import base36
 from getshorty import GetShorty
+from urllib.parse import urlparse
+from collections import OrderedDict
+from user_agents import parse as parse_ua
+from flask import Flask, request, Response, redirect
 
-app = Flask(__name__)
+app = Flask('get-shorty')
 
 app.config.update(dict(
     DATABASE=os.path.join(app.root_path, cfg.DATABASE)))
