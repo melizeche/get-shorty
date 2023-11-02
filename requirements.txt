@@ -2,3 +2,4 @@ flask>=1.0.0
 python-baseconv==1.2.0
 user-agents==1.1.0
 pytest==3.0.7
+werkzeug>=3.0.1 # not directly required, pinned by Snyk to avoid a vulnerability
